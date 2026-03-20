@@ -1,0 +1,69 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  Project:
+    Type: String
+  ProjectLower:
+    Type: String
+  Environment:
+    Type: String
+  EnvironmentLower:
+    Type: String
+
+Resources:
+  Distribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        DefaultRootObject: index.html
+        DefaultCacheBehavior:
+          MinTTL: 0
+          DefaultTTL: 0
+          MaxTTL: 0
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          Compress: true
+          # https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html
+          # CachingDisabled
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+          # https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-response-headers-policies.html
+          # CORS-With-Preflight
+          ResponseHeadersPolicyId: 5cc3b908-e619-4b99-88e5-2cf7f45965bd
+          # https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-origin-request-policies.html
+          # CORS-S3Origin
+          OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf
+          TargetOriginId: default-website-bucket
+          ViewerProtocolPolicy: redirect-to-https
+        PriceClass: PriceClass_100
+        Origins:
+          - Id: default-website-bucket
+            DomainName:
+              Fn::ImportValue: 'PANHENIO-PROD::Website::S3::RegionalURL'
+            OriginPath: ''
+            OriginAccessControlId: !Ref PrivateS3OriginAccessControlConfig
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+        #ViewerCertificate:
+        #  AcmCertificateArn: !Ref DistributionCertificate
+        #  SslSupportMethod: sni-only
+        #  MinimumProtocolVersion: TLSv1.2_2019
+
+  PrivateS3OriginAccessControlConfig:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Description: 'Default website S3 access control'
+        Name: !Sub ${Project}-DEFAULT-WEBSITE-BUCKET-OAC-${Environment}
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+Outputs:
+  CloudFrontDistributionId:
+    Value: !Ref Distribution
+    Description: CloudFront Distribution Id
+    Export:
+      Name: !Sub '${Project}-${Environment}::CloudFront::DistributionId'
