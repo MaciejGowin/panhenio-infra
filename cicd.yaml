@@ -1,0 +1,13 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  ProjectLower:
+    Type: String
+  EnvironmentLower:
+    Type: String
+
+Resources:
+  CiCdBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${ProjectLower}-cicd-${EnvironmentLower}'

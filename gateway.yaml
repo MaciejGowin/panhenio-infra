@@ -9,12 +9,36 @@ Parameters:
     Type: String
   EnvironmentLower:
     Type: String
+  DomainName:
+    Type: String
+
+Mappings:
+  Environments:
+    PROD:
+      DomainCertificateArn: 'arn:aws:acm:us-east-1:403313580901:certificate/f75a0d6f-f88e-40c3-86e9-4d2975ccf108'
 
 Resources:
+  HttpApi:
+    Type: 'AWS::ApiGatewayV2::Api'
+    Properties:
+      Name: !Sub '${ProjectLower}-api-${EnvironmentLower}'
+      ProtocolType: HTTP
+
+  HttpApiDefaultStage:
+    DependsOn: HttpApi
+    Type: 'AWS::ApiGatewayV2::Stage'
+    Properties:
+      StageName: $default
+      ApiId: !Ref HttpApi
+      AutoDeploy: true
+
   Distribution:
     Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
+        Aliases:
+          - !Ref DomainName
+          - !Sub www.${DomainName}
         Enabled: true
         DefaultRootObject: index.html
         DefaultCacheBehavior:
@@ -38,6 +62,26 @@ Resources:
           TargetOriginId: default-website-bucket
           ViewerProtocolPolicy: redirect-to-https
         PriceClass: PriceClass_100
+        CacheBehaviors:
+          - PathPattern: /api/*
+            TargetOriginId: api-gateway
+            ViewerProtocolPolicy: redirect-to-https
+            DefaultTTL: 0
+            MinTTL: 0
+            MaxTTL: 0
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            # Managed-AllViewer
+            # OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3
+            # Managed-AllViewerExceptHostHeader
+            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
         Origins:
           - Id: default-website-bucket
             DomainName:
@@ -46,22 +90,32 @@ Resources:
             OriginAccessControlId: !Ref PrivateS3OriginAccessControlConfig
             S3OriginConfig:
               OriginAccessIdentity: ''
-        #ViewerCertificate:
-        #  AcmCertificateArn: !Ref DistributionCertificate
-        #  SslSupportMethod: sni-only
-        #  MinimumProtocolVersion: TLSv1.2_2019
+          - Id: api-gateway
+            DomainName: !Sub '${HttpApi}.execute-api.${AWS::Region}.amazonaws.com'
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols:
+                - TLSv1.2
+        ViewerCertificate:
+          AcmCertificateArn: !FindInMap [Environments, !Ref Environment, DomainCertificateArn]
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.2_2019
 
   PrivateS3OriginAccessControlConfig:
     Type: AWS::CloudFront::OriginAccessControl
     Properties:
       OriginAccessControlConfig:
-        Description: 'Default website S3 access control'
         Name: !Sub ${Project}-DEFAULT-WEBSITE-BUCKET-OAC-${Environment}
         OriginAccessControlOriginType: s3
         SigningBehavior: always
         SigningProtocol: sigv4
 
 Outputs:
+  HttpApi:
+    Value: !Ref HttpApi
+    Export:
+      Name: !Sub "${Project}-${Environment}::ApiGateway::API:Id"
+
   CloudFrontDistributionId:
     Value: !Ref Distribution
     Description: CloudFront Distribution Id

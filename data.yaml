@@ -1,0 +1,33 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  Project:
+    Type: String
+  ProjectLower:
+    Type: String
+  Environment:
+    Type: String
+
+Resources:
+  SourceTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: !Sub '${Project}-SOURCE-${Environment}'
+      BillingMode: 'PAY_PER_REQUEST'
+      AttributeDefinitions:
+        - AttributeName: "sourceId"
+          AttributeType: "S"
+        - AttributeName: "monthId"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "sourceId"
+          KeyType: "HASH"
+        - AttributeName: "monthId"
+          KeyType: "RANGE"
+      GlobalSecondaryIndexes:
+        - IndexName: !Sub "monthIndex"
+          KeySchema:
+            - AttributeName: "monthId"
+              KeyType: "HASH"
+          Projection:
+            ProjectionType: "KEYS_ONLY"
