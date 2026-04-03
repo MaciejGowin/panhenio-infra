@@ -23,3 +23,5 @@ infra-gateway-deploy:
 	aws cloudformation deploy --stack-name "${PROJECT}-GATEWAY-${ENVIRONMENT}" \
 		--template-file gateway.yaml \
 		--parameter-overrides Project=${PROJECT} ProjectLower=${PROJECT_LOWER} Environment=${ENVIRONMENT} EnvironmentLower=${ENVIRONMENT_LOWER} DomainName=${DOMAIN_NAME}
+
+deploy: infra-cicd-deploy infra-data-deploy infra-website-deploy infra-gateway-deploy
