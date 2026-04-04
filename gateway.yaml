@@ -40,27 +40,22 @@ Resources:
           - !Ref DomainName
           - !Sub www.${DomainName}
         Enabled: true
-        DefaultRootObject: index.html
         DefaultCacheBehavior:
-          MinTTL: 0
+          TargetOriginId: api-gateway
+          ViewerProtocolPolicy: redirect-to-https
           DefaultTTL: 0
+          MinTTL: 0
           MaxTTL: 0
           AllowedMethods:
             - GET
             - HEAD
             - OPTIONS
-          Compress: true
-          # https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html
-          # CachingDisabled
+            - PUT
+            - POST
+            - PATCH
+            - DELETE
           CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
-          # https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-response-headers-policies.html
-          # CORS-With-Preflight
-          ResponseHeadersPolicyId: 5cc3b908-e619-4b99-88e5-2cf7f45965bd
-          # https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-origin-request-policies.html
-          # CORS-S3Origin
-          OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf
-          TargetOriginId: default-website-bucket
-          ViewerProtocolPolicy: redirect-to-https
+          OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
         PriceClass: PriceClass_100
         CacheBehaviors:
           - PathPattern: /api/*
@@ -77,11 +72,64 @@ Resources:
               - POST
               - PATCH
               - DELETE
-            # Managed-AllViewer
-            # OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3
-            # Managed-AllViewerExceptHostHeader
-            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
             CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
+          - PathPattern: /_next/static/*
+            TargetOriginId: default-website-bucket
+            ViewerProtocolPolicy: redirect-to-https
+            DefaultTTL: 0
+            MinTTL: 0
+            MaxTTL: 0
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            Compress: true
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf
+            ResponseHeadersPolicyId: 5cc3b908-e619-4b99-88e5-2cf7f45965bd
+          - PathPattern: /*.png
+            TargetOriginId: default-website-bucket
+            ViewerProtocolPolicy: redirect-to-https
+            DefaultTTL: 0
+            MinTTL: 0
+            MaxTTL: 0
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            Compress: true
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf
+            ResponseHeadersPolicyId: 5cc3b908-e619-4b99-88e5-2cf7f45965bd
+          - PathPattern: /robots.txt
+            TargetOriginId: default-website-bucket
+            ViewerProtocolPolicy: redirect-to-https
+            DefaultTTL: 0
+            MinTTL: 0
+            MaxTTL: 0
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            Compress: true
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf
+            ResponseHeadersPolicyId: 5cc3b908-e619-4b99-88e5-2cf7f45965bd
+          - PathPattern: /sitemap.xml
+            TargetOriginId: default-website-bucket
+            ViewerProtocolPolicy: redirect-to-https
+            DefaultTTL: 0
+            MinTTL: 0
+            MaxTTL: 0
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            Compress: true
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf
+            ResponseHeadersPolicyId: 5cc3b908-e619-4b99-88e5-2cf7f45965bd
         Origins:
           - Id: default-website-bucket
             DomainName:
