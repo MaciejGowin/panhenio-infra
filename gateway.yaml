@@ -15,27 +15,25 @@ Parameters:
 Mappings:
   Environments:
     PROD:
-      DomainCertificateArn: 'arn:aws:acm:us-east-1:403313580901:certificate/f75a0d6f-f88e-40c3-86e9-4d2975ccf108'
+      WebsiteDomainCertificateArn: 'arn:aws:acm:us-east-1:403313580901:certificate/f75a0d6f-f88e-40c3-86e9-4d2975ccf108'
+      AdminWebsiteDomainCertificateArn: 'arn:aws:acm:us-east-1:403313580901:certificate/8c20ca59-12ad-47ca-bbdf-117f19fe193f'
 
 Resources:
-  HttpApi:
-    Type: 'AWS::ApiGatewayV2::Api'
+  PrivateS3OriginAccessControlConfig:
+    Type: AWS::CloudFront::OriginAccessControl
     Properties:
-      Name: !Sub '${ProjectLower}-api-${EnvironmentLower}'
-      ProtocolType: HTTP
+      OriginAccessControlConfig:
+        Name: !Sub ${Project}-DEFAULT-WEBSITE-BUCKET-OAC-${Environment}
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
 
-  HttpApiDefaultStage:
-    DependsOn: HttpApi
-    Type: 'AWS::ApiGatewayV2::Stage'
-    Properties:
-      StageName: $default
-      ApiId: !Ref HttpApi
-      AutoDeploy: true
-
+  ### WEBSITE V1
   Distribution:
     Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
+        Comment: 'Legacy Website Distribution'
         Aliases:
           - !Ref DomainName
           - !Sub www.${DomainName}
@@ -133,39 +131,157 @@ Resources:
         Origins:
           - Id: default-website-bucket
             DomainName:
-              Fn::ImportValue: 'PANHENIO-PROD::Website::S3::RegionalURL'
+              Fn::ImportValue: 'PANHENIO-PROD::S3::Website::RegionalURL'
             OriginPath: ''
             OriginAccessControlId: !Ref PrivateS3OriginAccessControlConfig
             S3OriginConfig:
               OriginAccessIdentity: ''
           - Id: api-gateway
-            DomainName: !Sub '${HttpApi}.execute-api.${AWS::Region}.amazonaws.com'
+            DomainName: !Sub '${WebsiteHttpApi}.execute-api.${AWS::Region}.amazonaws.com'
             CustomOriginConfig:
               OriginProtocolPolicy: https-only
               OriginSSLProtocols:
                 - TLSv1.2
         ViewerCertificate:
-          AcmCertificateArn: !FindInMap [Environments, !Ref Environment, DomainCertificateArn]
+          AcmCertificateArn: !FindInMap [Environments, !Ref Environment, WebsiteDomainCertificateArn]
           SslSupportMethod: sni-only
           MinimumProtocolVersion: TLSv1.2_2019
 
-  PrivateS3OriginAccessControlConfig:
-    Type: AWS::CloudFront::OriginAccessControl
+  ### WEBSITE V2
+  WebsiteHttpApi:
+    Type: 'AWS::ApiGatewayV2::Api'
     Properties:
-      OriginAccessControlConfig:
-        Name: !Sub ${Project}-DEFAULT-WEBSITE-BUCKET-OAC-${Environment}
-        OriginAccessControlOriginType: s3
-        SigningBehavior: always
-        SigningProtocol: sigv4
+      Name: !Sub '${ProjectLower}-website-${EnvironmentLower}'
+      ProtocolType: HTTP
+
+  WebsiteHttpApiDefaultStage:
+    DependsOn: WebsiteHttpApi
+    Type: 'AWS::ApiGatewayV2::Stage'
+    Properties:
+      StageName: $default
+      ApiId: !Ref WebsiteHttpApi
+      AutoDeploy: true
+
+  WebsiteDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: 'Website Distribution'
+#        Aliases:
+#          - !Ref DomainName
+#          - !Sub www.${DomainName}
+        Enabled: true
+        DefaultCacheBehavior:
+          TargetOriginId: api-gateway
+          ViewerProtocolPolicy: redirect-to-https
+          DefaultTTL: 0
+          MinTTL: 0
+          MaxTTL: 0
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+            - PUT
+            - POST
+            - PATCH
+            - DELETE
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+          OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
+        PriceClass: PriceClass_100
+        CacheBehaviors:
+          - PathPattern: /api/*
+            TargetOriginId: api-gateway
+            ViewerProtocolPolicy: redirect-to-https
+            DefaultTTL: 0
+            MinTTL: 0
+            MaxTTL: 0
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
+          - PathPattern: /_next/static/*
+            TargetOriginId: default-website-bucket
+            ViewerProtocolPolicy: redirect-to-https
+            DefaultTTL: 0
+            MinTTL: 0
+            MaxTTL: 0
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            Compress: true
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf
+            ResponseHeadersPolicyId: 5cc3b908-e619-4b99-88e5-2cf7f45965bd
+          - PathPattern: /*.png
+            TargetOriginId: default-website-bucket
+            ViewerProtocolPolicy: redirect-to-https
+            DefaultTTL: 0
+            MinTTL: 0
+            MaxTTL: 0
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            Compress: true
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf
+            ResponseHeadersPolicyId: 5cc3b908-e619-4b99-88e5-2cf7f45965bd
+          - PathPattern: /robots.txt
+            TargetOriginId: default-website-bucket
+            ViewerProtocolPolicy: redirect-to-https
+            DefaultTTL: 0
+            MinTTL: 0
+            MaxTTL: 0
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            Compress: true
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf
+            ResponseHeadersPolicyId: 5cc3b908-e619-4b99-88e5-2cf7f45965bd
+          - PathPattern: /sitemap.xml
+            TargetOriginId: default-website-bucket
+            ViewerProtocolPolicy: redirect-to-https
+            DefaultTTL: 0
+            MinTTL: 0
+            MaxTTL: 0
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            Compress: true
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf
+            ResponseHeadersPolicyId: 5cc3b908-e619-4b99-88e5-2cf7f45965bd
+        Origins:
+          - Id: default-website-bucket
+            DomainName:
+              Fn::ImportValue: 'PANHENIO-PROD::S3::Website::RegionalURL'
+            OriginPath: ''
+            OriginAccessControlId: !Ref PrivateS3OriginAccessControlConfig
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+          - Id: api-gateway
+            DomainName: !Sub '${WebsiteHttpApi}.execute-api.${AWS::Region}.amazonaws.com'
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols:
+                - TLSv1.2
+        ViewerCertificate:
+          AcmCertificateArn: !FindInMap [Environments, !Ref Environment, WebsiteDomainCertificateArn]
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.2_2019
 
 Outputs:
-  HttpApi:
-    Value: !Ref HttpApi
+  WebsiteHttpApi:
+    Value: !Ref WebsiteHttpApi
     Export:
-      Name: !Sub "${Project}-${Environment}::ApiGateway::API:Id"
-
-  CloudFrontDistributionId:
-    Value: !Ref Distribution
-    Description: CloudFront Distribution Id
-    Export:
-      Name: !Sub '${Project}-${Environment}::CloudFront::DistributionId'
+      Name: !Sub "${Project}-${Environment}::ApiGateway::Website:Id"

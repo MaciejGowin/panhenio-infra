@@ -11,6 +11,7 @@ Parameters:
     Type: String
 
 Resources:
+  # Website
   WebsiteBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -62,9 +63,67 @@ Resources:
               StringLike:
                 AWS:SourceArn: !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/*
 
+  # Admin website
+  AdminWebsiteBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${ProjectLower}-admin-website-${EnvironmentLower}
+      VersioningConfiguration:
+        Status: Enabled
+      AccessControl: Private
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Status: Enabled
+            ExpiredObjectDeleteMarker: true
+            NoncurrentVersionExpiration:
+              NewerNoncurrentVersions: 3
+              NoncurrentDays: 30
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+
+  AdminWebsiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref AdminWebsiteBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: InternalAccountAccess
+            Effect: Allow
+            Principal:
+              AWS: !Ref AWS::AccountId
+            Action:
+              - s3:*
+            Resource:
+              - !Sub arn:aws:s3:::${ProjectLower}-admin-website-${EnvironmentLower}
+              - !Sub arn:aws:s3:::${ProjectLower}-admin-website-${EnvironmentLower}/*
+          - Sid: GrantCloudfrontAccess
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub arn:aws:s3:::${ProjectLower}-admin-website-${EnvironmentLower}/*
+            Condition:
+              StringLike:
+                AWS:SourceArn: !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/*
+
 Outputs:
-  RegionalBucketURL:
+  WebsiteBucketRegionalURL:
     Value: !GetAtt WebsiteBucket.RegionalDomainName
-    Description: Regional Bucket URL
+    Description: Website Bucket Regional URL
     Export:
-      Name: !Sub '${Project}-${Environment}::Website::S3::RegionalURL'
+      Name: !Sub '${Project}-${Environment}::S3::Website::RegionalURL'
+
+  AdminWebsiteBucketRegionalURL:
+    Value: !GetAtt AdminWebsiteBucket.RegionalDomainName
+    Description: Admin Website Bucket Regional URL
+    Export:
+      Name: !Sub '${Project}-${Environment}::S3::AdminWebsite::RegionalURL'

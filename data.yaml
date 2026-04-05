@@ -32,6 +32,29 @@ Resources:
           Projection:
             ProjectionType: "KEYS_ONLY"
 
+  SourceEventsTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: !Sub '${Project}-SOURCE-EVENTS-${Environment}'
+      BillingMode: 'PAY_PER_REQUEST'
+      AttributeDefinitions:
+        - AttributeName: "sourceId"
+          AttributeType: "S"
+        - AttributeName: "monthId"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "sourceId"
+          KeyType: "HASH"
+        - AttributeName: "monthId"
+          KeyType: "RANGE"
+      GlobalSecondaryIndexes:
+        - IndexName: !Sub "monthIndex"
+          KeySchema:
+            - AttributeName: "monthId"
+              KeyType: "HASH"
+          Projection:
+            ProjectionType: "KEYS_ONLY"
+
   ConfigurationTable:
     Type: 'AWS::DynamoDB::Table'
     Properties:
