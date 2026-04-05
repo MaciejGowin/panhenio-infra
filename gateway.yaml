@@ -280,8 +280,88 @@ Resources:
           SslSupportMethod: sni-only
           MinimumProtocolVersion: TLSv1.2_2019
 
+  ### WEBSITE ADMIN
+  AdminWebsiteHttpApi:
+    Type: 'AWS::ApiGatewayV2::Api'
+    Properties:
+      Name: !Sub '${ProjectLower}-admin-website-${EnvironmentLower}'
+      ProtocolType: HTTP
+
+  AdminWebsiteHttpApiDefaultStage:
+    DependsOn: AdminWebsiteHttpApi
+    Type: 'AWS::ApiGatewayV2::Stage'
+    Properties:
+      StageName: $default
+      ApiId: !Ref AdminWebsiteHttpApi
+      AutoDeploy: true
+
+  AdminWebsiteDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: 'Admin Website Distribution'
+        #        Aliases:
+        #          - !Sub admin.${DomainName}
+        Enabled: true
+        DefaultRootObject: index.html
+        DefaultCacheBehavior:
+          TargetOriginId: default-website-bucket
+          ViewerProtocolPolicy: redirect-to-https
+          DefaultTTL: 0
+          MinTTL: 0
+          MaxTTL: 0
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          Compress: true
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+          OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf
+          ResponseHeadersPolicyId: 5cc3b908-e619-4b99-88e5-2cf7f45965bd
+        PriceClass: PriceClass_100
+        CacheBehaviors:
+          - PathPattern: /api/*
+            TargetOriginId: api-gateway
+            ViewerProtocolPolicy: redirect-to-https
+            DefaultTTL: 0
+            MinTTL: 0
+            MaxTTL: 0
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+              - PUT
+              - POST
+              - PATCH
+              - DELETE
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
+        Origins:
+          - Id: default-website-bucket
+            DomainName:
+              Fn::ImportValue: 'PANHENIO-PROD::S3::AdminWebsite::RegionalURL'
+            OriginPath: ''
+            OriginAccessControlId: !Ref PrivateS3OriginAccessControlConfig
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+          - Id: api-gateway
+            DomainName: !Sub '${AdminWebsiteHttpApi}.execute-api.${AWS::Region}.amazonaws.com'
+            CustomOriginConfig:
+              OriginProtocolPolicy: https-only
+              OriginSSLProtocols:
+                - TLSv1.2
+        ViewerCertificate:
+          AcmCertificateArn: !FindInMap [Environments, !Ref Environment, AdminWebsiteDomainCertificateArn]
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.2_2019
+
 Outputs:
   WebsiteHttpApi:
     Value: !Ref WebsiteHttpApi
     Export:
       Name: !Sub "${Project}-${Environment}::ApiGateway::Website:Id"
+
+  AdminWebsiteHttpApi:
+    Value: !Ref AdminWebsiteHttpApi
+    Export:
+      Name: !Sub "${Project}-${Environment}::ApiGateway::AdminWebsite:Id"
