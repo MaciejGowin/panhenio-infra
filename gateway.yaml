@@ -300,8 +300,8 @@ Resources:
     Properties:
       DistributionConfig:
         Comment: 'Admin Website Distribution'
-        #        Aliases:
-        #          - !Sub admin.${DomainName}
+        Aliases:
+          - !Sub admin.${DomainName}
         Enabled: true
         DefaultRootObject: index.html
         DefaultCacheBehavior:
