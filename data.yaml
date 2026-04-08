@@ -9,18 +9,18 @@ Parameters:
     Type: String
 
 Resources:
-  SourceEventsTable:
+  OrganizerEventsTable:
     Type: 'AWS::DynamoDB::Table'
     Properties:
-      TableName: !Sub '${Project}-SOURCE-EVENTS-${Environment}'
+      TableName: !Sub '${Project}-ORGANIZER-EVENTS-${Environment}'
       BillingMode: 'PAY_PER_REQUEST'
       AttributeDefinitions:
-        - AttributeName: "sourceId"
+        - AttributeName: "organizerId"
           AttributeType: "S"
         - AttributeName: "monthId"
           AttributeType: "S"
       KeySchema:
-        - AttributeName: "sourceId"
+        - AttributeName: "organizerId"
           KeyType: "HASH"
         - AttributeName: "monthId"
           KeyType: "RANGE"
