@@ -12,22 +12,22 @@ Resources:
   OrganizerEventsTable:
     Type: 'AWS::DynamoDB::Table'
     Properties:
-      TableName: !Sub '${Project}-ORGANIZER-EVENTS-${Environment}'
+      TableName: !Sub '${Project}-ORGANIZER-EVENT-BUNDLE-${Environment}'
       BillingMode: 'PAY_PER_REQUEST'
       AttributeDefinitions:
         - AttributeName: "organizerId"
           AttributeType: "S"
-        - AttributeName: "monthId"
+        - AttributeName: "month"
           AttributeType: "S"
       KeySchema:
         - AttributeName: "organizerId"
           KeyType: "HASH"
-        - AttributeName: "monthId"
+        - AttributeName: "month"
           KeyType: "RANGE"
       GlobalSecondaryIndexes:
         - IndexName: !Sub "monthIndex"
           KeySchema:
-            - AttributeName: "monthId"
+            - AttributeName: "month"
               KeyType: "HASH"
           Projection:
             ProjectionType: "KEYS_ONLY"
