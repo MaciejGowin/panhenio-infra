@@ -66,6 +66,7 @@ Resources:
             - POST
             - PATCH
             - DELETE
+          # CachePolicyId: CachingDisabled
           CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
           OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
         PriceClass: PriceClass_100
@@ -84,6 +85,7 @@ Resources:
               - POST
               - PATCH
               - DELETE
+            # CachePolicyId: CachingDisabled
             CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
             OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
           - PathPattern: /_next/static/*
@@ -97,35 +99,44 @@ Resources:
               - HEAD
               - OPTIONS
             Compress: true
+            # CachePolicyId: CachingDisabled
             CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
             OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf
             ResponseHeadersPolicyId: 5cc3b908-e619-4b99-88e5-2cf7f45965bd
           - PathPattern: /*.png
             TargetOriginId: default-website-bucket
             ViewerProtocolPolicy: redirect-to-https
-            DefaultTTL: 0
-            MinTTL: 0
-            MaxTTL: 0
             AllowedMethods:
               - GET
               - HEAD
               - OPTIONS
             Compress: true
-            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            # CachePolicyId: CachingOptimized
+            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+            OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf
+            ResponseHeadersPolicyId: 5cc3b908-e619-4b99-88e5-2cf7f45965bd
+          - PathPattern: /*.ico
+            TargetOriginId: default-website-bucket
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            Compress: true
+            # CachePolicyId: CachingOptimized
+            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
             OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf
             ResponseHeadersPolicyId: 5cc3b908-e619-4b99-88e5-2cf7f45965bd
           - PathPattern: /googlee57a35921e490015.html
             TargetOriginId: default-website-bucket
             ViewerProtocolPolicy: redirect-to-https
-            DefaultTTL: 1800
-            MinTTL: 0
-            MaxTTL: 86400
             AllowedMethods:
               - GET
               - HEAD
               - OPTIONS
             Compress: true
-            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            # CachePolicyId: CachingOptimized
+            CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
             OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf
             ResponseHeadersPolicyId: 5cc3b908-e619-4b99-88e5-2cf7f45965bd
         Origins:
@@ -182,6 +193,7 @@ Resources:
             - HEAD
             - OPTIONS
           Compress: true
+          # CachePolicyId: CachingDisabled
           CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
           OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf
           ResponseHeadersPolicyId: 5cc3b908-e619-4b99-88e5-2cf7f45965bd
@@ -201,6 +213,7 @@ Resources:
               - POST
               - PATCH
               - DELETE
+            # CachePolicyId: CachingDisabled
             CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
             OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
         Origins:
