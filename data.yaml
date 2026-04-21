@@ -43,3 +43,24 @@ Resources:
       KeySchema:
         - AttributeName: "id"
           KeyType: "HASH"
+
+  SubscribersTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: !Sub '${Project}-SUBSCRIBER-${Environment}'
+      BillingMode: 'PAY_PER_REQUEST'
+      AttributeDefinitions:
+        - AttributeName: "email"
+          AttributeType: "S"
+        - AttributeName: "activationCode"
+          AttributeType: "S"
+      KeySchema:
+        - AttributeName: "email"
+          KeyType: "HASH"
+      GlobalSecondaryIndexes:
+        - IndexName: !Sub "activationCodeIndex"
+          KeySchema:
+            - AttributeName: "activationCode"
+              KeyType: "HASH"
+          Projection:
+            ProjectionType: "KEYS_ONLY"

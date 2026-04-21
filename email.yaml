@@ -1,0 +1,46 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Parameters:
+  Project:
+    Type: String
+  Environment:
+    Type: String
+
+Resources:
+
+  Tenant:
+    Type: 'AWS::SES::Tenant'
+    Properties:
+      TenantName: !Sub '${Project}-DEFAULT-${Environment}'
+
+  ConfigurationSet:
+    Type: 'AWS::SES::ConfigurationSet'
+    Properties:
+      Name: !Sub '${Project}-DEFAULT-${Environment}'
+
+  CloudWatchDestination:
+    Type: 'AWS::SES::ConfigurationSetEventDestination'
+    Properties:
+      ConfigurationSetName: !Ref ConfigurationSet
+      EventDestination:
+        Name: !Sub '${Project}-CLOUDWATCH-${Environment}'
+        Enabled: true
+        MatchingEventTypes:
+          - send
+          - delivery
+          - bounce
+          - complaint
+          - renderingFailure
+        CloudWatchDestination:
+          DimensionConfigurations:
+            - DimensionName: ses:from-domain
+              DimensionValueSource: emailHeader
+              DefaultDimensionValue: unknown
+
+  Identity:
+    Type: 'AWS::SES::EmailIdentity'
+    DeletionPolicy: 'Retain'
+    Properties:
+      EmailIdentity: 'panhenio.pl'
+      ConfigurationSetAttributes:
+        ConfigurationSetName: !Ref ConfigurationSet
