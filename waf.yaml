@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  Project:
+    Type: String
+  Environment:
+    Type: String
+
+Resources:
+  WebsiteWebAcl:
+    Type: AWS::WAFv2::WebACL
+    Properties:
+      Name: !Sub ${Project}-WEBSITE-WAF-${Environment}
+      Scope: CLOUDFRONT
+      DefaultAction:
+        Allow: {}
+      Rules:
+        - Name: AWSManagedRulesCommonRuleSet
+          Priority: 1
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesCommonRuleSet
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: true
+            MetricName: AWSManagedRulesCommonRuleSet
+#        - Name: AWSManagedRulesBotControlRuleSet
+#          Priority: 2
+#          OverrideAction:
+#            None: {}
+#          Statement:
+#            ManagedRuleGroupStatement:
+#              VendorName: AWS
+#              Name: AWSManagedRulesBotControlRuleSet
+#              ManagedRuleGroupConfigs:
+#                - AWSManagedRulesBotControlRuleSet:
+#                    InspectionLevel: COMMON
+#          VisibilityConfig:
+#            SampledRequestsEnabled: true
+#            CloudWatchMetricsEnabled: true
+#            MetricName: AWSManagedRulesBotControlRuleSet
+      VisibilityConfig:
+        SampledRequestsEnabled: true
+        CloudWatchMetricsEnabled: true
+        MetricName: !Sub ${Project}-WEBSITE-WAF-${Environment}
+
+Outputs:
+  WebAclArn:
+    Value: !GetAtt WebsiteWebAcl.Arn

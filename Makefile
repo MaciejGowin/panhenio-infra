@@ -24,9 +24,16 @@ website-deploy:
 		--template-file website.yaml \
 		--parameter-overrides Project=${PROJECT} ProjectLower=${PROJECT_LOWER} Environment=${ENVIRONMENT} EnvironmentLower=${ENVIRONMENT_LOWER}
 
+waf-deploy:
+	aws cloudformation deploy --stack-name "${PROJECT}-WAF-${ENVIRONMENT}" \
+		--template-file waf.yaml \
+		--region us-east-1 \
+		--parameter-overrides Project=${PROJECT} Environment=${ENVIRONMENT}
+
 gateway-deploy:
+	$(eval WAF_ARN := $(shell aws cloudformation describe-stacks --stack-name "${PROJECT}-WAF-${ENVIRONMENT}" --region us-east-1 --query "Stacks[0].Outputs[?OutputKey=='WebAclArn'].OutputValue" --output text))
 	aws cloudformation deploy --stack-name "${PROJECT}-GATEWAY-${ENVIRONMENT}" \
 		--template-file gateway.yaml \
-		--parameter-overrides Project=${PROJECT} ProjectLower=${PROJECT_LOWER} Environment=${ENVIRONMENT} EnvironmentLower=${ENVIRONMENT_LOWER} DomainName=${DOMAIN_NAME}
+		--parameter-overrides Project=${PROJECT} ProjectLower=${PROJECT_LOWER} Environment=${ENVIRONMENT} EnvironmentLower=${ENVIRONMENT_LOWER} DomainName=${DOMAIN_NAME} WafWebAclArn=${WAF_ARN}
 
-deploy: cicd-deploy data-deploy email-deploy website-deploy gateway-deploy
+deploy: cicd-deploy data-deploy email-deploy waf-deploy website-deploy gateway-deploy

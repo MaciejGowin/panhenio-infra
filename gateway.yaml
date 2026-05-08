@@ -11,6 +11,8 @@ Parameters:
     Type: String
   DomainName:
     Type: String
+  WafWebAclArn:
+    Type: String
 
 Mappings:
   Environments:
@@ -153,6 +155,7 @@ Resources:
               OriginProtocolPolicy: https-only
               OriginSSLProtocols:
                 - TLSv1.2
+        WebACLId: !Ref WafWebAclArn
         ViewerCertificate:
           AcmCertificateArn: !FindInMap [Environments, !Ref Environment, WebsiteDomainCertificateArn]
           SslSupportMethod: sni-only
