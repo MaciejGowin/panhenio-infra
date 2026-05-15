@@ -64,3 +64,23 @@ Resources:
               KeyType: "HASH"
           Projection:
             ProjectionType: "KEYS_ONLY"
+
+  DSQLCluster:
+    Type: 'AWS::DSQL::Cluster'
+    Properties:
+      DeletionProtectionEnabled: false
+      Tags:
+        - Key: 'Project'
+          Value: !Ref Project
+        - Key: 'Environment'
+          Value: !Ref Environment
+
+Outputs:
+  DSQLClusterIdentifier:
+    Value: !GetAtt DSQLCluster.Identifier
+    Export:
+      Name: !Sub '${Project}-${Environment}::DSQL::Cluster::Identifier'
+  DSQLClusterEndpoint:
+    Value: !GetAtt DSQLCluster.Endpoint
+    Export:
+      Name: !Sub '${Project}-${Environment}::DSQL::Cluster::Endpoint'
